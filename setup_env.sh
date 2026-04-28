@@ -1,51 +1,74 @@
 #!/bin/bash
 
-# Configuration
-ROOT_WORKSPACE_DIR="$HOME/.workspace"
-CIPHER_DIR="$ROOT_WORKSPACE_DIR/.enc"
-MOUNT_DIR="$ROOT_WORKSPACE_DIR/dec"
+set -euo pipefail
 
-# Local key paths
-LOCAL_KEY_DIR="./keys"
-SSH_KEY_NAME="id_ed25519_ssh"
-GIT_KEY_NAME="id_ed25519_github"
+# --- Utility Functions ---
+log() { echo -e "\033[1;34m[*] $1\033[0m"; }
+info() { echo -e "\033[1;32m[+] $1\033[0m"; }
+warn() { echo -e "\033[1;33m[!] $1\033[0m"; }
+error() { echo -e "\033[1;31m[X] $1\033[0m"; exit 1; }
 
-SSH_PORT=2222
-EMAIL="example@example.com" 
-
-echo "[*] Initializing ED25519 Secure Workspace..."
-
-# 1. Install Dependencies
-sudo apt update && sudo apt install -y gocryptfs openssh-client
-
-# 2. Key Generation Logic
-mkdir -p "$LOCAL_KEY_DIR"
-[ ! -f "$LOCAL_KEY_DIR/$SSH_KEY_NAME" ] && ssh-keygen -t ed25519 -C "$EMAIL" -f "$LOCAL_KEY_DIR/$SSH_KEY_NAME" -N "" -q
-[ ! -f "$LOCAL_KEY_DIR/$GIT_KEY_NAME" ] && ssh-keygen -t ed25519 -C "$EMAIL" -f "$LOCAL_KEY_DIR/$GIT_KEY_NAME" -N "" -q
-
-# 3. Handle Encryption & Mount Cleanup
-echo "[*] Cleaning up stale mounts..."
-# Lazy unmount to clear any 'Device Busy' or 'd???????' states
-fusermount -uz "$MOUNT_DIR" 2>/dev/null || true
-sudo umount -l "$MOUNT_DIR" 2>/dev/null || true
-
-# Ensure directories exist and are owned by you
-mkdir -p "$CIPHER_DIR"
-if [ ! -d "$MOUNT_DIR" ]; then
-    mkdir -p "$MOUNT_DIR"
+# --- Load Configuration ---
+if [ ! -f .env ]; then
+    warn ".env file not found, creating from .env.example"
+    cp .env.example .env
 fi
 
+# Load variables from .env
+if [ -f .env ]; then
+    # We use a while loop to read and export, allowing for simple variable expansion
+    while IFS='=' read -r key value; do
+        [[ "$key" =~ ^#.*$ ]] && continue
+        [[ -z "$key" ]] && continue
+        # Expand value if it contains $HOME
+        value=$(eval echo "$value")
+        export "$key"="$value"
+    done < .env
+fi
+
+
+# Defaults if not set in .env
+ROOT_WORKSPACE_DIR="${ROOT_WORKSPACE_DIR:-$HOME/.workspace}"
+CIPHER_DIR="$ROOT_WORKSPACE_DIR/${CIPHER_DIR_NAME:-encrypted_workspace}"
+MOUNT_DIR="$ROOT_WORKSPACE_DIR/${MOUNT_DIR_NAME:-decrypted_workspace}"
+SSH_PORT="${SSH_PORT:-2222}"
+CONTAINER_NAME="${CONTAINER_NAME:-dev_workspace}"
+
+log "Initializing Secure Workspace..."
+
+# 1. Install Dependencies
+log "Checking dependencies..."
+if ! command -v gocryptfs &> /dev/null; then
+    warn "gocryptfs not found, attempting to install..."
+    sudo apt update && sudo apt install -y gocryptfs openssh-client
+else
+    info "gocryptfs is already installed."
+fi
+
+
+# 2. Setup Environment
+mkdir -p "$ROOT_WORKSPACE_DIR"
+
+# 3. Handle Encryption & Mount Cleanup
+log "Cleaning up stale mounts..."
+fusermount -uz "$MOUNT_DIR" 2>/dev/null || true
+# Only try sudo umount if fusermount failed and it's still mounted
+if mountpoint -q "$MOUNT_DIR"; then
+    warn "Attempting sudo umount as fallback..."
+    sudo umount -l "$MOUNT_DIR" 2>/dev/null || true
+fi
+
+# Ensure directories exist
+mkdir -p "$CIPHER_DIR"
+mkdir -p "$MOUNT_DIR"
+
 if [ ! -f "$CIPHER_DIR/gocryptfs.conf" ]; then
-    echo "[!] Initializing new gocryptfs vault..."
+    warn "Initializing new gocryptfs vault..."
     gocryptfs -init "$CIPHER_DIR"
 fi
 
-# IMPORTANT: -allow_other is required for Docker to see files inside the mount
-echo "[*] Mounting Vault..."
-sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
-gocryptfs -allow_other "$CIPHER_DIR" "$MOUNT_DIR"
-
 # 4. Generate Docker Compose
+log "Generating docker-compose.yml..."
 cat <<EOF > docker-compose.yml
 services:
   dev:
@@ -53,9 +76,7 @@ services:
       context: .
       args:
         SSH_PORT: $SSH_PORT
-        SSH_PUB_PATH: "$LOCAL_KEY_DIR/${SSH_KEY_NAME}.pub"
-        GIT_PRIV_PATH: "$LOCAL_KEY_DIR/${GIT_KEY_NAME}"
-    container_name: dev_workspace
+    container_name: $CONTAINER_NAME
     network_mode: host
     volumes:
       - $MOUNT_DIR:/home/dev/workspace
@@ -63,8 +84,22 @@ services:
     restart: unless-stopped
 EOF
 
-echo "----------------------------------------------------------------"
-echo "[+] Done. Key paths are mapped dynamically."
-echo "[!] IMPORTANT: Ensure 'user_allow_other' is uncommented in /etc/fuse.conf"
-echo "[!] Build: docker compose up -d --build"
-echo "[!] SSH Access: ssh -i $LOCAL_KEY_DIR/$SSH_KEY_NAME -p $SSH_PORT dev@localhost"
+
+# 5. Mount Vault
+# IMPORTANT: -allow_other is required for Docker to see files inside the mount
+log "Mounting Vault..."
+if ! grep -q "^user_allow_other" /etc/fuse.conf 2>/dev/null; then
+    if grep -q "^#user_allow_other" /etc/fuse.conf 2>/dev/null; then
+        warn "Enabling user_allow_other in /etc/fuse.conf (requires sudo)..."
+        sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
+    else
+        warn "Could not find user_allow_other in /etc/fuse.conf. You might need to add it manually if mounting fails."
+    fi
+fi
+
+# Note: This will prompt for a password
+gocryptfs -allow_other "$CIPHER_DIR" "$MOUNT_DIR" || warn "Mount failed. You may need to run ./start.sh manually to mount the vault."
+
+info "Setup complete."
+warn "Start with: ./start.sh"
+info "Keys will be generated inside the container on first start."
