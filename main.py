@@ -22,7 +22,8 @@ def init():
     # Check dependencies first
     missing = checker.check_all(["docker", "gocryptfs", "ssh-keygen"])
     if "gocryptfs" in missing:
-        checker.ensure_apt_dependencies()
+        checker.ensure_system_dependencies()
+
         
     vault = VaultManager(config.cipher_path, config.mount_path)
     container = ContainerManager(config)

@@ -1,5 +1,6 @@
 import subprocess
 import os
+from pathlib import Path
 from .utils import Logger
 
 class VaultManager:
@@ -7,8 +8,29 @@ class VaultManager:
         self.cipher_path = cipher_path
         self.mount_path = mount_path
 
+    def _enable_allow_other(self):
+        """Ensures user_allow_other is enabled in /etc/fuse.conf"""
+        fuse_conf = Path("/etc/fuse.conf")
+        if not fuse_conf.exists():
+            return
+
+        try:
+            content = fuse_conf.read_text()
+            if "user_allow_other" not in [line.strip() for line in content.splitlines() if not line.startswith("#")]:
+                Logger.warn("Enabling user_allow_other in /etc/fuse.conf...")
+                # We use sed via sudo to uncomment or add the line
+                if "#user_allow_other" in content:
+                    subprocess.run(["sudo", "sed", "-i", "s/#user_allow_other/user_allow_other/", str(fuse_conf)], check=True)
+                else:
+                    subprocess.run(["sudo", "sh", "-c", f"echo 'user_allow_other' >> {fuse_conf}"], check=True)
+                Logger.info("user_allow_other enabled.")
+        except Exception as e:
+            Logger.warn(f"Could not automatically enable user_allow_other: {e}")
+
     def init(self):
+        self._enable_allow_other()
         if (self.cipher_path / "gocryptfs.conf").exists():
+
             Logger.info("Vault already initialized.")
             return True
         

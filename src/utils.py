@@ -39,16 +39,51 @@ class DependencyChecker:
         return []
 
     @staticmethod
-    def ensure_apt_dependencies():
-        """Attempts to install gocryptfs and openssh-client on Debian systems."""
-        try:
-            # Check if we are on a Debian-based system
-            with open("/etc/os-release") as f:
-                if "debian" in f.read().lower() or "ubuntu" in f.read().lower():
-                    Logger.log("Debian-based system detected. Ensuring system dependencies...")
-                    subprocess.run(["sudo", "apt", "update"], check=True)
-                    subprocess.run(["sudo", "apt", "install", "-y", "gocryptfs", "openssh-client"], check=True)
-                    Logger.info("System dependencies updated.")
-        except Exception as e:
-            Logger.warn(f"Could not automatically install dependencies: {e}")
-            Logger.warn("Please ensure gocryptfs and openssh-client are installed manually.")
+    def ensure_system_dependencies():
+        """Detects the Linux package manager and attempts to install dependencies."""
+        managers = {
+            "apt": {
+                "update": ["sudo", "apt", "update"],
+                "install": ["sudo", "apt", "install", "-y"],
+                "packages": ["gocryptfs", "openssh-client"]
+            },
+            "dnf": {
+                "update": [],
+                "install": ["sudo", "dnf", "install", "-y"],
+                "packages": ["gocryptfs", "openssh-clients"]
+            },
+            "yum": {
+                "update": [],
+                "install": ["sudo", "yum", "install", "-y"],
+                "packages": ["gocryptfs", "openssh-clients"]
+            },
+            "pacman": {
+                "update": ["sudo", "pacman", "-Sy"],
+                "install": ["sudo", "pacman", "-S", "--noconfirm"],
+                "packages": ["gocryptfs", "openssh"]
+            },
+            "zypper": {
+                "update": [],
+                "install": ["sudo", "zypper", "install", "-y"],
+                "packages": ["gocryptfs", "openssh"]
+            }
+        }
+
+        for manager, cmd in managers.items():
+            if shutil.which(manager):
+                try:
+                    Logger.log(f"Detected package manager: {manager}. Ensuring dependencies...")
+                    if cmd["update"]:
+                        subprocess.run(cmd["update"], check=True)
+                    
+                    install_cmd = cmd["install"] + cmd["packages"]
+                    subprocess.run(install_cmd, check=True)
+                    Logger.info("System dependencies updated successfully.")
+                    return True
+                except subprocess.CalledProcessError as e:
+                    Logger.warn(f"Failed to install dependencies via {manager}: {e}")
+                    break
+        
+        Logger.warn("Could not automatically install dependencies. Please ensure gocryptfs and openssh-client are installed manually.")
+        return False
+

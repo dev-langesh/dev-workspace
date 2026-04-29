@@ -42,12 +42,25 @@ log "Initializing Secure Workspace..."
 
 # 1. Install Dependencies
 log "Checking dependencies..."
-if ! command -v gocryptfs &> /dev/null; then
-    warn "gocryptfs not found, attempting to install..."
-    sudo apt update && sudo apt install -y gocryptfs openssh-client
+if ! command -v gocryptfs &> /dev/null || ! command -v ssh &> /dev/null; then
+    warn "Dependencies missing, attempting to install..."
+    if command -v apt &> /dev/null; then
+        sudo apt update && sudo apt install -y gocryptfs openssh-client
+    elif command -v dnf &> /dev/null; then
+        sudo dnf install -y gocryptfs openssh-clients
+    elif command -v yum &> /dev/null; then
+        sudo yum install -y gocryptfs openssh-clients
+    elif command -v pacman &> /dev/null; then
+        sudo pacman -Sy --noconfirm gocryptfs openssh
+    elif command -v zypper &> /dev/null; then
+        sudo zypper install -y gocryptfs openssh
+    else
+        error "Could not detect package manager. Please install gocryptfs and openssh-client manually."
+    fi
 else
-    info "gocryptfs is already installed."
+    info "Core dependencies are already installed."
 fi
+
 
 
 # 2. Setup Environment
@@ -91,6 +104,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 EOF
+
+# user_allow_other is required for Docker to see files inside the mount
+log "Enabling user_allow_other..."
+if ! grep -q "^user_allow_other" /etc/fuse.conf 2>/dev/null; then
+    if grep -q "^#user_allow_other" /etc/fuse.conf 2>/dev/null; then
+        warn "Enabling user_allow_other in /etc/fuse.conf (requires sudo)..."
+        sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
+    else
+        warn "Could not find user_allow_other in /etc/fuse.conf. You might need to add it manually if mounting fails."
+    fi
+fi
 
 info "Setup complete."
 warn "Start with: ./start.sh"
