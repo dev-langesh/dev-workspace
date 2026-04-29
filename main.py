@@ -7,7 +7,9 @@ from src.config import Config
 from src.utils import Logger, DependencyChecker
 from src.vault import VaultManager
 from src.container import ContainerManager
+from src.identity import IdentityManager
 from colorama import Fore, Style
+
 
 BANNER = f"""
 {Fore.CYAN}{Style.BRIGHT}╔══════════════════════════════════════════════════════════════╗
@@ -50,25 +52,13 @@ def start():
     vault = VaultManager(config.cipher_path, config.mount_path)
     container = ContainerManager(config)
     
-    # Deriving the subpath from SSH_KEY_DIR (e.g., .ssh_keys)
-    # The container root is /home/dev/workspace
-    ssh_key_dir_raw = os.getenv("SSH_KEY_DIR", "/home/dev/workspace/.ssh_keys")
-    container_root = "/home/dev/workspace"
-    
-    if ssh_key_dir_raw.startswith(container_root):
-        subpath = ssh_key_dir_raw.replace(container_root, "").lstrip("/")
-    else:
-        subpath = os.path.basename(ssh_key_dir_raw)
-        
-    host_key_dir = config.mount_path / subpath
-    
     if vault.mount():
         if container.up():
             Logger.info("Workspace is ready.")
-            host_key_path = str(host_key_dir)
+            identity = IdentityManager(config)
             
             print(f"\n{Fore.WHITE}{Style.BRIGHT}🚀 ACCESS YOUR WORKSPACE:{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}ssh -i {host_key_path}/id_ed25519 -p {config.ssh_port} dev@localhost{Style.RESET_ALL}\n")
+            print(f"{Fore.GREEN}{identity.get_ssh_command()}{Style.RESET_ALL}\n")
             
             Logger.info("Use the command above or copy the key from 'docker logs dev_workspace'")
 
@@ -125,40 +115,9 @@ def encrypt():
 def keys():
     """Show the SSH keys and their host-side paths"""
     config = Config()
-    
-    # Deriving the subpath from SSH_KEY_DIR (e.g., .ssh_keys)
-    # The container root is /home/dev/workspace
-    ssh_key_dir_raw = os.getenv("SSH_KEY_DIR", "/home/dev/workspace/.ssh_keys")
-    container_root = "/home/dev/workspace"
-    
-    if ssh_key_dir_raw.startswith(container_root):
-        subpath = ssh_key_dir_raw.replace(container_root, "").lstrip("/")
-    else:
-        subpath = os.path.basename(ssh_key_dir_raw)
-        
-    host_key_dir = config.mount_path / subpath
+    identity = IdentityManager(config)
+    identity.display_keys()
 
-    
-    priv_path = host_key_dir / "id_ed25519"
-    pub_path = host_key_dir / "id_ed25519.pub"
-    
-    print(f"\n{Fore.WHITE}{Style.BRIGHT}🔑 SSH IDENTITY DETAILS:{Style.RESET_ALL}")
-    
-    if not host_key_dir.exists():
-        Logger.error("Vault is locked or keys haven't been generated yet. Run 'start' first.")
-        return
-
-    print(f"{Fore.CYAN}Directory: {Fore.WHITE}{host_key_dir}")
-    
-    if pub_path.exists():
-        print(f"\n{Fore.GREEN}[Public Key Path]: {pub_path}")
-        print(f"{Fore.WHITE}{pub_path.read_text()}")
-    
-    if priv_path.exists():
-        print(f"{Fore.GREEN}[Private Key Path]: {priv_path}")
-        print(f"{Fore.WHITE}{priv_path.read_text()}")
-    
-    print(f"{Style.BRIGHT}--------------------------------------------------{Style.RESET_ALL}\n")
 
 if __name__ == "__main__":
     cli()
