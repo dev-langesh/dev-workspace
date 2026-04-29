@@ -2,25 +2,30 @@ import subprocess
 import sys
 import shutil
 from typing import List
+from colorama import Fore, Style, init
+
+# Initialize colorama for cross-platform support
+init(autoreset=True)
 
 class Logger:
     @staticmethod
     def log(message: str):
-        print(f"[*] {message}")
+        print(f"{Fore.CYAN}{Style.BRIGHT}[*] {Style.NORMAL}{message}")
 
     @staticmethod
     def info(message: str):
-        print(f"[+] {message}")
+        print(f"{Fore.GREEN}{Style.BRIGHT}[+] {Style.NORMAL}{message}")
 
     @staticmethod
     def warn(message: str):
-        print(f"[!] {message}")
+        print(f"{Fore.YELLOW}{Style.BRIGHT}[!] {Style.NORMAL}{message}")
 
     @staticmethod
     def error(message: str, exit_code: int = 1):
-        print(f"[ERROR] {message}")
+        print(f"{Fore.RED}{Style.BRIGHT}[X] {message}")
         if exit_code is not None:
             sys.exit(exit_code)
+
 
 class DependencyChecker:
     @staticmethod

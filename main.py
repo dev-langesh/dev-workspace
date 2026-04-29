@@ -7,11 +7,19 @@ from src.config import Config
 from src.utils import Logger, DependencyChecker
 from src.vault import VaultManager
 from src.container import ContainerManager
+from colorama import Fore, Style
+
+BANNER = f"""
+{Fore.CYAN}{Style.BRIGHT}╔══════════════════════════════════════════════════════════════╗
+║  {Fore.WHITE}             🛡️  SECURE DEVELOPMENT WORKSPACE                {Fore.CYAN}║
+╚══════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
+"""
 
 @click.group()
 def cli():
-    """Secure Development Workspace CLI"""
-    pass
+    """{Fore.WHITE}Secure Development Workspace Management Tool{Style.RESET_ALL}"""
+    print(BANNER)
+
 
 @cli.command()
 def init():
@@ -30,7 +38,10 @@ def init():
     
     vault.init()
     container.generate_compose()
-    Logger.info("Initialization complete. Run 'python3 main.py start' to begin.")
+    
+    print(f"\n{Fore.GREEN}{Style.BRIGHT}✨ INITIALIZATION COMPLETE{Style.RESET_ALL}")
+    print(f"{Fore.WHITE}Next step: {Fore.CYAN}python3 main.py start{Style.RESET_ALL}\n")
+
 
 @cli.command()
 def start():
@@ -43,7 +54,12 @@ def start():
         if container.up():
             Logger.info("Workspace is ready.")
             host_key_path = str(config.ssh_key_dir).replace("/home/dev/workspace", str(config.mount_path))
-            Logger.info(f"Access via: ssh -i {host_key_path}/id_ed25519 -p {config.ssh_port} dev@localhost")
+            
+            print(f"\n{Fore.WHITE}{Style.BRIGHT}🚀 ACCESS YOUR WORKSPACE:{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}ssh -i {host_key_path}/id_ed25519 -p {config.ssh_port} dev@localhost{Style.RESET_ALL}\n")
+            
+            Logger.info("Use the command above or copy the key from 'docker logs dev_workspace'")
+
 
 @cli.command()
 def stop():
@@ -85,6 +101,8 @@ def decrypt():
     config = Config()
     vault = VaultManager(config.cipher_path, config.mount_path)
     vault.mount()
+
+
 
 if __name__ == "__main__":
     cli()
