@@ -92,25 +92,6 @@ services:
     restart: unless-stopped
 EOF
 
-
-
-
-
-# # 5. Mount Vault
-# # IMPORTANT: -allow_other is required for Docker to see files inside the mount
-# log "Mounting Vault..."
-# if ! grep -q "^user_allow_other" /etc/fuse.conf 2>/dev/null; then
-#     if grep -q "^#user_allow_other" /etc/fuse.conf 2>/dev/null; then
-#         warn "Enabling user_allow_other in /etc/fuse.conf (requires sudo)..."
-#         sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
-#     else
-#         warn "Could not find user_allow_other in /etc/fuse.conf. You might need to add it manually if mounting fails."
-#     fi
-# fi
-
-# # Note: This will prompt for a password
-# gocryptfs -allow_other "$CIPHER_DIR" "$MOUNT_DIR" || warn "Mount failed. You may need to run ./start.sh manually to mount the vault."
-
 info "Setup complete."
 warn "Start with: ./start.sh"
 info "Keys will be generated inside the container on first start."

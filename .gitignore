@@ -1,3 +1,5 @@
 docker-compose.yml
 keys/
 .env
+venv
+__pycache__/
