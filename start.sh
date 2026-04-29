@@ -26,6 +26,7 @@ ROOT_WORKSPACE_DIR="${ROOT_WORKSPACE_DIR:-$HOME/.workspace}"
 CIPHER_DIR="$ROOT_WORKSPACE_DIR/${CIPHER_DIR_NAME:-encrypted_workspace}"
 MOUNT_DIR="$ROOT_WORKSPACE_DIR/${MOUNT_DIR_NAME:-decrypted_workspace}"
 SSH_PORT="${SSH_PORT:-2222}"
+SSH_KEY_DIR="${SSH_KEY_DIR:-/home/dev/workspace/.ssh_keys}"
 
 log "Starting Secure Environment..."
 
@@ -51,5 +52,7 @@ log "Starting Docker Container..."
 docker compose up -d --build
 
 info "Success. Your workspace is decrypted and the container is running."
-info "Access via: ssh -i private_key -p $SSH_PORT dev@localhost"
-info "(Use the private key printed during the first container start)"
+# Deriving the host-side path for the log message
+HOST_KEY_PATH=$(echo "$SSH_KEY_DIR" | sed "s|/home/dev/workspace|$MOUNT_DIR|")
+info "Access via: ssh -i $HOST_KEY_PATH/id_ed25519 -p $SSH_PORT dev@localhost"
+info "(Use the command above or copy the key from 'docker logs $CONTAINER_NAME')"

@@ -33,6 +33,10 @@ CIPHER_DIR="$ROOT_WORKSPACE_DIR/${CIPHER_DIR_NAME:-encrypted_workspace}"
 MOUNT_DIR="$ROOT_WORKSPACE_DIR/${MOUNT_DIR_NAME:-decrypted_workspace}"
 SSH_PORT="${SSH_PORT:-2222}"
 CONTAINER_NAME="${CONTAINER_NAME:-dev_workspace}"
+IMAGE_NAME="${IMAGE_NAME:-dev_workspace_image}"
+SSH_KEY_DIR="${SSH_KEY_DIR:-/home/dev/workspace/.ssh_keys}"
+
+
 
 log "Initializing Secure Workspace..."
 
@@ -76,8 +80,12 @@ services:
       context: .
       args:
         SSH_PORT: $SSH_PORT
+    image: $IMAGE_NAME
     container_name: $CONTAINER_NAME
+
     network_mode: host
+    environment:
+      - SSH_KEY_DIR=$SSH_KEY_DIR
     volumes:
       - $MOUNT_DIR:/home/dev/workspace
       - /var/run/docker.sock:/var/run/docker.sock
@@ -85,20 +93,23 @@ services:
 EOF
 
 
-# 5. Mount Vault
-# IMPORTANT: -allow_other is required for Docker to see files inside the mount
-log "Mounting Vault..."
-if ! grep -q "^user_allow_other" /etc/fuse.conf 2>/dev/null; then
-    if grep -q "^#user_allow_other" /etc/fuse.conf 2>/dev/null; then
-        warn "Enabling user_allow_other in /etc/fuse.conf (requires sudo)..."
-        sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
-    else
-        warn "Could not find user_allow_other in /etc/fuse.conf. You might need to add it manually if mounting fails."
-    fi
-fi
 
-# Note: This will prompt for a password
-gocryptfs -allow_other "$CIPHER_DIR" "$MOUNT_DIR" || warn "Mount failed. You may need to run ./start.sh manually to mount the vault."
+
+
+# # 5. Mount Vault
+# # IMPORTANT: -allow_other is required for Docker to see files inside the mount
+# log "Mounting Vault..."
+# if ! grep -q "^user_allow_other" /etc/fuse.conf 2>/dev/null; then
+#     if grep -q "^#user_allow_other" /etc/fuse.conf 2>/dev/null; then
+#         warn "Enabling user_allow_other in /etc/fuse.conf (requires sudo)..."
+#         sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
+#     else
+#         warn "Could not find user_allow_other in /etc/fuse.conf. You might need to add it manually if mounting fails."
+#     fi
+# fi
+
+# # Note: This will prompt for a password
+# gocryptfs -allow_other "$CIPHER_DIR" "$MOUNT_DIR" || warn "Mount failed. You may need to run ./start.sh manually to mount the vault."
 
 info "Setup complete."
 warn "Start with: ./start.sh"

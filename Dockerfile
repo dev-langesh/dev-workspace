@@ -93,7 +93,8 @@ COPY --chmod=755 <<'EOF' /usr/local/bin/bootstrap.sh
 #!/bin/bash
 set -e
 
-KEY_DIR="/home/dev/workspace/.ssh_keys"
+# Use environment variable for key directory, fallback to default
+KEY_DIR="${SSH_KEY_DIR:-/home/dev/workspace/.ssh_keys}"
 mkdir -p "$KEY_DIR"
 chown dev:dev "$KEY_DIR"
 
@@ -106,14 +107,12 @@ if [ ! -f "$PRIVATE_KEY" ]; then
     chown dev:dev "$PRIVATE_KEY" "$PUBLIC_KEY"
     
     echo "----------------------------------------------------------------"
+    echo ""
     echo "[!] NEW SSH KEY GENERATED"
-    echo "Public Key: You can add this to your GitHub account in Settings -> SSH and GPG keys"
+    echo "Public Key: $PUBLIC_KEY"
     echo ""
-    cat "$PUBLIC_KEY"
+    echo "Private Key: $PRIVATE_KEY"
     echo ""
-    echo "Private Key: Copy this key to your local machine for ssh access"
-    echo ""
-    cat "$PRIVATE_KEY"
     echo "----------------------------------------------------------------"
 else
     echo "[*] Existing SSH keys found in vault."
