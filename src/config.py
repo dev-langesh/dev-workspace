@@ -7,7 +7,11 @@ class Config:
         load_dotenv(env_path)
         
         # Workspace Paths
-        self.root_dir = Path(os.path.expanduser(os.getenv("ROOT_WORKSPACE_DIR", "~/.workspace"))).resolve()
+        root_raw = os.getenv("ROOT_WORKSPACE_DIR", "$HOME/.workspace")
+        # Ensure $HOME is expanded and the path is absolute
+        expanded_root = os.path.expandvars(root_raw).replace("$HOME", os.path.expanduser("~"))
+        self.root_dir = Path(os.path.expanduser(expanded_root)).absolute()
+
         self.cipher_dir_name = os.getenv("CIPHER_DIR_NAME", "encrypted_workspace")
         self.mount_dir_name = os.getenv("MOUNT_DIR_NAME", "decrypted_workspace")
         
