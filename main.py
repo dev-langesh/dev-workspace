@@ -52,7 +52,27 @@ def start():
     vault = VaultManager(config)
     container = ContainerManager(config)
     
+    # Recursively validate the base image exists in the repository or can be pulled
+    while True:
+        if container.image_exists(config.base_image):
+            break
+            
+        Logger.log(f"Base image '{config.base_image}' not found locally. Attempting automatic pull...")
+        if container.pull_image(config.base_image):
+            break
+        
+        Logger.error(f"Could not find or pull base image '{config.base_image}'.", exit_code=None)
+        new_base = click.prompt("Enter new base image", default="ubuntu:24.04")
+        config.base_image = new_base
+    
+    # Generate/Update compose with the validated base image
+    container.generate_compose()
+
+
+
+    
     if vault.mount():
+
         if container.up():
             Logger.info("Workspace is ready.")
             identity = IdentityManager(config)

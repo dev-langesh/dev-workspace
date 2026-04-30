@@ -14,6 +14,7 @@ class ContainerManager:
       context: .
       args:
         SSH_PORT: {self.config.ssh_port}
+        BASE_IMAGE: {self.config.base_image}
     image: {self.config.image_name}
     container_name: {self.config.container_name}
     network_mode: host
@@ -26,6 +27,25 @@ class ContainerManager:
 """
         with open("docker-compose.yml", "w") as f:
             f.write(compose_content)
+
+    def image_exists(self, image_name):
+        """Checks if a docker image exists locally."""
+        try:
+            result = subprocess.run(["docker", "image", "inspect", image_name], capture_output=True, text=True)
+            return result.returncode == 0
+        except Exception:
+            return False
+
+    def pull_image(self, image_name):
+        """Attempts to pull a docker image from a remote registry."""
+        Logger.log(f"Attempting to pull '{image_name}'...")
+        try:
+            subprocess.run(["docker", "pull", image_name], check=True)
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
+
 
     def up(self):
         Logger.log("Starting Docker Container...")

@@ -1,5 +1,7 @@
-# Use Ubuntu 24.04 as the base
-FROM ubuntu:24.04
+# Use a build argument for the base image
+ARG BASE_IMAGE=ubuntu:24.04
+FROM ${BASE_IMAGE}
+
 
 # Build arguments
 ARG SSH_PORT=2222
