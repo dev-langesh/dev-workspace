@@ -31,7 +31,15 @@ By combining **AES-256 encryption** (via gocryptfs) with **container isolation**
 ## 🚀 Quick Start
 
 ### 1. Setup Environment
-Ensure you have Python 3.8+, Docker, and gocryptfs installed.
+Ensure you have `Python 3.8+` and `Docker` installed. 
+
+**Supported Linux Distributions:**
+The CLI automatically handles system dependencies (`gocryptfs`, `openssh`) for:
+- **Ubuntu / Debian** (`apt`)
+- **Fedora / CentOS / RHEL** (`dnf` / `yum`)
+- **Arch Linux** (`pacman`)
+- **openSUSE** (`zypper`)
+
 
 ```bash
 # Create and activate virtual environment
@@ -72,6 +80,8 @@ If your IDE doesn't support tunnels, or you prefer a traditional workflow, you c
 ```bash
 ssh -i path/to/your/private_key -p 2222 dev@[IP_ADDRESS]
 ```
+
+Run `python3 main.py keys` to get the key pairs and their paths on the host.
 
 ---
 
