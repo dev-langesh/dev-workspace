@@ -25,6 +25,10 @@ class Config:
         # Docker Config
         self.container_name = os.getenv("CONTAINER_NAME", "dev_workspace")
         self.image_name = os.getenv("IMAGE_NAME", "dev_workspace")
+        
+        # System Config
+        self.fuse_conf = Path(os.getenv("FUSE_CONF", "/etc/fuse.conf")).resolve()
+
 
     def __repr__(self):
         return f"<Config root={self.root_dir} container={self.container_name}>"

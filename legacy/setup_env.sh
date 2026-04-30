@@ -106,15 +106,17 @@ services:
 EOF
 
 # user_allow_other is required for Docker to see files inside the mount
-log "Enabling user_allow_other..."
-if ! grep -q "^user_allow_other" /etc/fuse.conf 2>/dev/null; then
-    if grep -q "^#user_allow_other" /etc/fuse.conf 2>/dev/null; then
-        warn "Enabling user_allow_other in /etc/fuse.conf (requires sudo)..."
-        sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
+FUSE_CONF="${FUSE_CONF:-/etc/fuse.conf}"
+log "Enabling user_allow_other in $FUSE_CONF..."
+if ! grep -q "^user_allow_other" "$FUSE_CONF" 2>/dev/null; then
+    if grep -q "^#user_allow_other" "$FUSE_CONF" 2>/dev/null; then
+        warn "Enabling user_allow_other in $FUSE_CONF (requires sudo)..."
+        sudo sed -i 's/#user_allow_other/user_allow_other/' "$FUSE_CONF"
     else
-        warn "Could not find user_allow_other in /etc/fuse.conf. You might need to add it manually if mounting fails."
+        warn "Could not find user_allow_other in $FUSE_CONF. You might need to add it manually if mounting fails."
     fi
 fi
+
 
 info "Setup complete."
 warn "Start with: ./start.sh"

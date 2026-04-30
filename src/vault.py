@@ -4,20 +4,22 @@ from pathlib import Path
 from .utils import Logger
 
 class VaultManager:
-    def __init__(self, cipher_path, mount_path):
-        self.cipher_path = cipher_path
-        self.mount_path = mount_path
+    def __init__(self, config):
+        self.config = config
+        self.cipher_path = config.cipher_path
+        self.mount_path = config.mount_path
+
 
     def _enable_allow_other(self):
-        """Ensures user_allow_other is enabled in /etc/fuse.conf"""
-        fuse_conf = Path("/etc/fuse.conf")
+        """Ensures user_allow_other is enabled in FUSE configuration"""
+        fuse_conf = self.config.fuse_conf
         if not fuse_conf.exists():
             return
 
         try:
             content = fuse_conf.read_text()
             if "user_allow_other" not in [line.strip() for line in content.splitlines() if not line.startswith("#")]:
-                Logger.warn("Enabling user_allow_other in /etc/fuse.conf...")
+                Logger.warn(f"Enabling user_allow_other in {fuse_conf}...")
                 # We use sed via sudo to uncomment or add the line
                 if "#user_allow_other" in content:
                     subprocess.run(["sudo", "sed", "-i", "s/#user_allow_other/user_allow_other/", str(fuse_conf)], check=True)
@@ -25,7 +27,8 @@ class VaultManager:
                     subprocess.run(["sudo", "sh", "-c", f"echo 'user_allow_other' >> {fuse_conf}"], check=True)
                 Logger.info("user_allow_other enabled.")
         except Exception as e:
-            Logger.warn(f"Could not automatically enable user_allow_other: {e}")
+            Logger.warn(f"Could not automatically enable user_allow_other in {fuse_conf}: {e}")
+
 
     def init(self):
         self._enable_allow_other()

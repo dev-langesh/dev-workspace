@@ -35,7 +35,7 @@ def init():
         checker.ensure_system_dependencies()
 
         
-    vault = VaultManager(config.cipher_path, config.mount_path)
+    vault = VaultManager(config)
     container = ContainerManager(config)
     
     vault.init()
@@ -49,7 +49,7 @@ def init():
 def start():
     """Unlock the vault and start the workspace"""
     config = Config()
-    vault = VaultManager(config.cipher_path, config.mount_path)
+    vault = VaultManager(config)
     container = ContainerManager(config)
     
     if vault.mount():
@@ -67,7 +67,7 @@ def start():
 def stop():
     """Shutdown the workspace and lock the vault"""
     config = Config()
-    vault = VaultManager(config.cipher_path, config.mount_path)
+    vault = VaultManager(config)
     container = ContainerManager(config)
     
     container.down()
@@ -82,7 +82,7 @@ def delete(force):
         click.confirm("CRITICAL WARNING: This will PERMANENTLY DELETE all your data and keys. Continue?", abort=True)
     
     config = Config()
-    vault = VaultManager(config.cipher_path, config.mount_path)
+    vault = VaultManager(config)
     container = ContainerManager(config)
     
     container.down()
@@ -101,14 +101,14 @@ def delete(force):
 def decrypt():
     """Unlock the vault (Manual)"""
     config = Config()
-    vault = VaultManager(config.cipher_path, config.mount_path)
+    vault = VaultManager(config)
     vault.mount()
 
 @cli.command()
 def encrypt():
     """Lock the vault (Manual)"""
     config = Config()
-    vault = VaultManager(config.cipher_path, config.mount_path)
+    vault = VaultManager(config)
     vault.unmount()
 
 @cli.command()
