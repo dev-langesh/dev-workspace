@@ -13,7 +13,7 @@ from colorama import Fore, Style
 
 BANNER = f"""
 {Fore.CYAN}{Style.BRIGHT}╔══════════════════════════════════════════════════════════════╗
-║  {Fore.WHITE}             🛡️  SECURE DEVELOPMENT WORKSPACE                {Fore.CYAN}║
+║  {Fore.WHITE}             🛡️  SECURE DEVELOPMENT WORKSPACE               {Fore.CYAN} ║
 ╚══════════════════════════════════════════════════════════════╝{Style.RESET_ALL}
 """
 
