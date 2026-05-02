@@ -42,7 +42,10 @@ Ensure you have `Python 3.8+` and `Docker` installed.
 
 ```bash
 # Create and activate virtual environment
+sudo apt install python3-venv
+
 python3 -m venv venv
+
 source venv/bin/activate
 
 # Install dependencies
