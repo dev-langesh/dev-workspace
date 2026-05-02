@@ -2,4 +2,7 @@ docker-compose.yml
 keys/
 .env
 venv
+venv_test
 __pycache__/
+.coverage
+Dockerfile.test

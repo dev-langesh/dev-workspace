@@ -36,9 +36,6 @@ Ensure you have `Python 3.8+` and `Docker` installed.
 **Supported Linux Distributions:**
 The CLI automatically handles system dependencies (`gocryptfs`, `openssh`) for:
 - **Ubuntu / Debian** (`apt`)
-- **Fedora / CentOS / RHEL** (`dnf` / `yum`)
-- **Arch Linux** (`pacman`)
-- **openSUSE** (`zypper`)
 
 
 ```bash

@@ -40,7 +40,12 @@ class VaultManager:
         self.cipher_path.mkdir(parents=True, exist_ok=True)
         Logger.warn("Initializing new gocryptfs vault...")
         try:
-            subprocess.run(["gocryptfs", "-init", str(self.cipher_path)], check=True)
+            cmd = ["gocryptfs", "-init", str(self.cipher_path)]
+            test_pass = os.getenv("TEST_PASSWORD")
+            if test_pass:
+                cmd += ["-extpass", f"echo {test_pass}"]
+            
+            subprocess.run(cmd, check=True)
             return True
         except subprocess.CalledProcessError:
             Logger.error("Failed to initialize vault.")
@@ -54,13 +59,12 @@ class VaultManager:
         self.mount_path.mkdir(parents=True, exist_ok=True)
         Logger.log("Mounting Encrypted Vault...")
         try:
-            # We use allow_other for Docker access
-            subprocess.run([
-                "gocryptfs", 
-                "-allow_other", 
-                str(self.cipher_path), 
-                str(self.mount_path)
-            ], check=True)
+            cmd = ["gocryptfs", "-allow_other", str(self.cipher_path), str(self.mount_path)]
+            test_pass = os.getenv("TEST_PASSWORD")
+            if test_pass:
+                cmd += ["-extpass", f"echo {test_pass}"]
+            
+            subprocess.run(cmd, check=True)
             return True
         except subprocess.CalledProcessError:
             Logger.error("Mount failed. Check your password and /etc/fuse.conf.")
@@ -78,6 +82,7 @@ class VaultManager:
         except subprocess.CalledProcessError:
             Logger.error("Failed to unmount vault.")
             return False
+
 
     def is_mounted(self):
         return os.path.ismount(str(self.mount_path))
