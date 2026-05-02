@@ -8,7 +8,7 @@ A production-ready, modular CLI tool designed to manage a containerized and encr
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 - [Why Secure Workspace?](#-why-secure-workspace)
 - [Quick Start](#-quick-start)
 - [Accessing Your Workspace](#-accessing-your-workspace)
@@ -20,7 +20,7 @@ A production-ready, modular CLI tool designed to manage a containerized and encr
 
 ---
 
-## 🔒 Why Secure Workspace?
+## Why Secure Workspace?
 
 In many shared server environments, your source code and secrets are vulnerable to anyone with root or physical access. This project solves that by creating an **encrypted "vault"** that is only decrypted and mounted into a secure Docker container when you are actively working. 
 
@@ -28,14 +28,16 @@ By combining **AES-256 encryption** (via gocryptfs) with **container isolation**
 
 ---
 
-## 🚀 Quick Start
+## Supported Platforms:
+
+The CLI automatically handles system dependencies (`gocryptfs`, `openssh`) for:
+- **Ubuntu**
+- **Debian**
+
+## Quick Start
 
 ### 1. Setup Environment
 Ensure you have `Python 3.8+` and `Docker` installed. 
-
-**Supported Linux Distributions:**
-The CLI automatically handles system dependencies (`gocryptfs`, `openssh`) for:
-- **Ubuntu / Debian** (`apt`)
 
 
 ```bash
@@ -61,7 +63,7 @@ python3 main.py start
 
 ---
 
-## 🔌 Accessing Your Workspace
+## Accessing Your Workspace
 
 Once your workspace is running, you have two primary ways to connect:
 
@@ -82,7 +84,7 @@ Run `python3 main.py keys` to get the key pairs and their paths on the host.
 
 ---
 
-## 🔒 Security & Identity
+## Security & Identity
 
 ### SSH Hardening
 The workspace is configured with production-grade security:
@@ -95,7 +97,7 @@ Your SSH keys are generated **inside the container** on first launch and are sto
 
 ---
 
-## 🐙 GitHub Integration
+## GitHub Integration
 
 One of the major benefits of this workspace is the **seamless GitHub integration**. You do **not** need to generate Personal Access Tokens (PATs) or use the `gh` CLI.
 
@@ -105,7 +107,7 @@ One of the major benefits of this workspace is the **seamless GitHub integration
 
 ---
 
-## 🛠️ CLI Commands
+## CLI Commands
 
 | Command | Description |
 | :--- | :--- |
@@ -119,7 +121,7 @@ One of the major benefits of this workspace is the **seamless GitHub integration
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! If you have ideas for improvements or find any issues, feel free to open a Pull Request or create an Issue.
 
@@ -131,6 +133,6 @@ Contributions are welcome! If you have ideas for improvements or find any issues
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
