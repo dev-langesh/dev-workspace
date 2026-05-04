@@ -24,7 +24,7 @@ COPY requirements.txt requirements-test.txt ./
 
 # Install basic environment tools. gocryptfs is NOT installed here.
 RUN if command -v apt-get &> /dev/null; then \
-        apt-get update && apt-get install -y python3 python3-pip python3-venv sudo kmod fuse3 ; \
+        apt-get update && apt-get install -y python3 python3-pip sudo kmod fuse3 ; \
     elif command -v dnf &> /dev/null; then \
         dnf upgrade -y; \
         dnf install -y python3 python3-pip sudo kmod fuse; \
@@ -32,13 +32,16 @@ RUN if command -v apt-get &> /dev/null; then \
         yum update -y; \
         yum install -y python3 python3-pip sudo kmod fuse; \
     elif command -v pacman &> /dev/null; then \
-        pacman -Syu --noconfirm python python-pip python-venv sudo kmod fuse; \
+        pacman -Syu --noconfirm python python-pip sudo kmod fuse; \
     elif command -v zypper &> /dev/null; then \
         zypper install -y python3 python3-pip sudo kmod fuse openssh; \
     fi
 
+# install virtualenv
+RUN python3 -m pip install --break-system-packages virtualenv
+
 # Setup Python environment
-RUN python3 -m venv /opt/venv && \
+RUN python3 -m virtualenv /opt/venv && \
     /opt/venv/bin/pip install --upgrade pip && \
     /opt/venv/bin/pip install -r requirements.txt -r requirements-test.txt
 EOF

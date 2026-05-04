@@ -30,7 +30,8 @@ By combining **AES-256 encryption** (via gocryptfs) with **container isolation**
 
 ## Supported Platforms:
 
-The CLI automatically handles system dependencies (`gocryptfs`, `openssh`) for:
+Tested on:
+
 - **Ubuntu**
 - **Debian**
 
@@ -42,9 +43,9 @@ Ensure you have `Python 3.8+` and `Docker` installed.
 
 ```bash
 # Create and activate virtual environment
-sudo apt install python3-venv
+python3 -m pip install virtualenv --break-system-packages
 
-python3 -m venv venv
+python3 -m virtualenv venv
 
 source venv/bin/activate
 
